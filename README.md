@@ -66,11 +66,6 @@ Source:
 
 https://www.census.gov/data.html
 
-Potential future work may incorporate:
-- Population density
-- Socioeconomic indicators
-- Neighborhood demographic variables
-
 ---
 
 # Methodology
