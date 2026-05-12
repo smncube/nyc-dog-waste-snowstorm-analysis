@@ -21,6 +21,12 @@ Three major snowstorm periods were analyzed:
 
 The findings demonstrate that snowstorms significantly alter complaint behavior, though the direction and magnitude of the effect vary substantially across events.
 
+The complete analysis, findings, and statistical interpretation are available in:
+
+```text
+paper/snowstorm_analysis.md
+```
+
 ---
 
 # Research Question
@@ -41,170 +47,167 @@ There is no significant difference in the mean number of daily dog waste complai
 
 ---
 
-# Dataset
+# Data Sources
 
-This project uses publicly available NYC Open Data 311 Service Request records and supplementary census data.
-
-Because the raw datasets are extremely large, they are not included directly in this repository.
-
-## NYC Open Data 311 Dataset
+## NYC Open Data 311 Service Requests
 
 Source:
 
-https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2020-to-Present/erm2-nwe9/about_data
+https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9
 
-Users can download:
-- CSV files
-- Filtered complaint records
-- API access
+The dataset contains:
+- Complaint type
+- Complaint descriptors
+- Complaint dates
+- Borough information
+- Agency information
+- Geographic variables
 
-This project specifically filters for dog waste related complaints.
-
-## U.S. Census Data
-
-Source:
-
-https://www.census.gov/data.html
+This project filters specifically for dog waste related complaints.
 
 ---
 
-# Methodology
+# Replicating the Data Query
 
-Daily complaint counts were aggregated and grouped into three storm periods:
+The original NYC Open Data dataset was filtered to isolate dog waste complaints.
 
-- Pre-Storm (30 days before snowfall)
-- During Storm
-- Post-Storm (30 days after snowfall)
+The query structure used:
 
-Poisson regression models were initially estimated because the dependent variable represents count data.
+- Complaint Type = “Dirty Conditions”
+- Descriptor contains dog waste related terms
+- Years filtered:
+  - 2022
+  - 2026
 
-Model specification:
+Users can reproduce the dataset by:
+
+1. Opening the NYC Open Data portal
+2. Clicking “Filter”
+3. Selecting:
+   - Complaint Type
+   - Descriptor
+   - Created Date
+4. Exporting the filtered results as CSV
+
+---
+
+# Reproducing the Analysis
+
+## Step 1 — Download the Data
+
+Download the filtered NYC 311 dataset and place it into:
+
+```text
+data/raw/
+```
+
+The file should be named:
+
+```text
+311_service_requests_dog_waste_filtered.csv
+```
+
+---
+
+## Step 2 — Open the R Project
+
+Open the project folder in RStudio.
+
+All scripts use relative paths and should run directly from the project root directory.
+
+---
+
+## Step 3 — Run the Scripts in Order
+
+### 1. Exploratory Data Analysis
+
+Run:
+
+```text
+scripts/01_EDA_script.R
+```
+
+This script:
+- Loads and cleans the data
+- Converts dates
+- Creates storm windows
+- Generates summary statistics
+- Produces exploratory visualizations
+
+---
+
+### 2. January 2022 Model
+
+Run:
+
+```text
+scripts/02_January_2022_model.R
+```
+
+This script:
+- Filters January 2022 storm data
+- Aggregates daily complaint counts
+- Runs Poisson regression
+- Tests for overdispersion
+- Fits quasi-Poisson models
+- Generates visualizations
+
+---
+
+### 3. January 2026 Model
+
+Run:
+
+```text
+scripts/03_January_2026_model.R
+```
+
+This script:
+- Filters January 2026 storm data
+- Aggregates daily complaint counts
+- Runs Poisson regression
+- Tests for overdispersion
+- Fits quasi-Poisson models
+- Generates visualizations
+
+---
+
+### 4. February 2026 Model
+
+Run:
+
+```text
+scripts/04_February_2026_model.R
+```
+
+This script:
+- Filters February 2026 storm data
+- Aggregates daily complaint counts
+- Runs Poisson regression
+- Tests for overdispersion
+- Fits quasi-Poisson models
+- Generates visualizations
+
+---
+
+# Model Specification
+
+The primary model estimated:
 
 ```r
 count ~ storm_period
 ```
 
-Diagnostic testing revealed substantial overdispersion in all models. Because the variance exceeded the mean, quasi-Poisson regression models were estimated to produce corrected standard errors and more reliable statistical inference.
+Where:
+- `count` represents daily dog waste complaints
+- `storm_period` represents:
+  - Pre-Storm
+  - During Storm
+  - Post-Storm
 
----
+Poisson regression was initially used because the outcome variable represents count data.
 
-# Exploratory Data Analysis
-
-## January 2022 Storm
-
-| Storm Period | Total Complaints |
-|---|---|
-| During Storm | 2 |
-| Post Storm | 243 |
-| Pre Storm | 158 |
-
-The January 2022 storm showed a moderate increase in complaints following snowfall. Complaint activity remained low during the storm itself and increased after snow began to melt.
-
----
-
-## January 2026 Storm
-
-| Storm Period | Total Complaints |
-|---|---|
-| During Storm | 27 |
-| Post Storm | 1156 |
-| Pre Storm | 235 |
-
-The January 2026 storm produced the largest post-storm spike in complaints. Complaint totals increased dramatically after snowfall, suggesting delayed reporting or increased visibility after melting periods.
-
----
-
-## February 2026 Storm
-
-| Storm Period | Total Complaints |
-|---|---|
-| During Storm | 121 |
-| Post Storm | 499 |
-| Pre Storm | 1121 |
-
-Unlike previous storms, the February 2026 event produced lower complaint totals after the storm period.
-
----
-
-# Results
-
-## January 2022 Storm
-
-### Poisson Regression Results
-
-| Variable | Coefficient | p-value | IRR |
-|---|---|---|---|
-| During Storm | -1.111 | 0.118 | 0.329 |
-| Post Storm | 0.321 | 0.00167 | 1.38 |
-
-### Model Fit
-
-| Metric | Value |
-|---|---|
-| Null Deviance | 143.49 |
-| Residual Deviance | 128.08 |
-| AIC | 338.94 |
-
-The Poisson model indicated a statistically significant increase in complaints after the storm period. The Incident Rate Ratio of 1.38 suggests that post-storm complaints increased by approximately 38%.
-
-### Quasi-Poisson Results
-
-| Variable | Coefficient | p-value |
-|---|---|---|
-| During Storm | -1.111 | 0.329 |
-| Post Storm | 0.321 | 0.052 |
-
-### Dispersion Diagnostics
-
-| Metric | Value |
-|---|---|
-| Mean | 7.20 |
-| Variance | 20.92 |
-| Dispersion Statistic | 2.51 |
-
-The dispersion statistic indicated moderate overdispersion, requiring quasi-Poisson adjustment.
-
----
-
-## January 2026 Storm
-
-### Quasi-Poisson Results
-
-| Variable | Coefficient | p-value | IRR |
-|---|---|---|---|
-| During Storm | -0.459 | 0.602 | 0.63 |
-| Post Storm | 1.358 | < 0.001 | 3.89 |
-
-### Model Fit
-
-| Metric | Value |
-|---|---|
-| Null Deviance | 1406.24 |
-| Residual Deviance | 835.73 |
-| AIC | 1102.89 |
-
-The January 2026 storm produced a 289% increase in post-storm complaints.
-
----
-
-## February 2026 Storm
-
-### Quasi-Poisson Results
-
-| Variable | Coefficient | p-value | IRR |
-|---|---|---|---|
-| During Storm | 0.076 | 0.860 | 1.08 |
-| Post Storm | -0.809 | 0.0015 | 0.45 |
-
-### Model Fit
-
-| Metric | Value |
-|---|---|
-| Null Deviance | 1303.89 |
-| Residual Deviance | 1042.64 |
-| AIC | 1351.58 |
-
-The February 2026 storm produced a 55% decrease in post-storm complaints.
+Diagnostic testing revealed substantial overdispersion, requiring quasi-Poisson adjustment.
 
 ---
 
@@ -214,11 +217,11 @@ The analysis revealed several important trends:
 
 - Snowstorms significantly affect dog waste complaint patterns.
 - Most storms produced increases in complaints after snowfall.
-- January 2026 produced the largest increase, with complaints rising by 289%.
-- February 2026 produced a 55% decrease in complaints after the storm.
-- Complaint behavior varies considerably across storm events.
+- January 2026 produced the largest increase in complaints.
+- February 2026 produced a significant decrease in complaints after snowfall.
+- Complaint behavior varies substantially across storm events.
 
-These findings suggest that snowfall changes environmental visibility, public reporting behavior, and potentially sanitation conditions across the city.
+These findings suggest that snowfall changes environmental visibility, reporting behavior, and sanitation conditions across the city.
 
 ---
 
